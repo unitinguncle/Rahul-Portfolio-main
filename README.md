@@ -2,7 +2,8 @@
 Welcome to my personal portfolio website built with **React.js**, **Framer Motion**, and **modern UI design** principles.
 It showcases my work, projects, skills, and journey as a developer passionate about **Web Technologies**.
 
-🌐 **Website:** [[Satyanshu-Portfolio]](https://kunj-desai.netlify.app/)
+🌐 **Website:** [[Satyanshu-Portfolio]](https://satyanshu-portfolio-main.vercel.app/)
+(https://kunj-desai.netlify.app/).
 
 🖼️ **Screenshots**
 <img width="1902" height="994" alt="Screenshot 2025-11-03 232447" src="/Screenshot 2026-01-11 224736.png" />
