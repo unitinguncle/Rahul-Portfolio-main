@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: './', // fixes blank page on deployment
+  base: '/', // absolute paths — required for sub-routes like /admin/login to work
   server: {
     proxy: {
       '/api': {
