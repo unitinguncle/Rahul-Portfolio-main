@@ -1,5 +1,6 @@
 # Node modules
 node_modules/
+backend/node_modules/
 
 # Logs
 npm-debug.log*
@@ -9,11 +10,18 @@ pnpm-debug.log*
 
 # Environment files (keep secrets out of repo)
 .env
+backend/.env
 .env.local
 .env.*.local
 
 # Build output
 /dist
+
+# Backend uploads (user media — keep on server, not in git)
+backend/uploads/
+
+# Shell scripts (optional local convenience)
+start-backend.sh
 /build
 /out
 /.next

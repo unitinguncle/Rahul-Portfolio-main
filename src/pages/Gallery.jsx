@@ -1,158 +1,82 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import "./Gallery.css";
 
-const IMAGES = {
-  personal: [
-    {
-      id: 1,
-      caption: "Lost in the beauty of the Ocean Waves 🌫️",
-      photos: ["/GalleryS/20260101_003105.jpg", "/GalleryS/20260101_124247.jpg","/GalleryS/20251207_195739.jpg"],
-    },
-    {
-      id: 2,
-      caption:
-        "Weekend getaway to clear my head 🌄 Sometimes inspiration strikes when you’re away from the screen.",
-      photos: ["/GalleryS/IMG_20250930_195205544_MF_PORTRAIT.jpg", "/GalleryS/IMG-20250628-WA0041.jpg"],
-    },
-  ],
-  projects: [
-    {
-      id: 1,
-      caption:
-        "It’s an AI-powered tool that understands to help me (and others) get 1% better every day. 🚀",
-      photos: ["/GalleryS/projectHabit.jpeg"],
-    },
-  ],
-  achievements: [
-    {
-      id: 1,
-      caption: "🌟 Reached All India Rank 1 on HackerRank for the day and secured my 5th Gold Star in SQL.🏆!",
-      photos: ["/GalleryS/SQLgold.jpg"],
-    },
-    {
-      id: 2,
-      caption: "Top of the charts! 🥇 Secured AIR 1 in the Adobe Quiz on Unstop. 🚀 Representing Heritage Institute of Technology (HIT) at the top spot feels amazing! Hard work + Speed = 🏆.",
-      photos: ["/GalleryS/AdobeQuiz.jpeg"],
-    },
-  ],
-};
+const API_BASE = "";
 
-// ✨ Animation Variants
 const pageVariants = {
   hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      when: "beforeChildren",
-      staggerChildren: 0.2,
-      duration: 0.8,
-      ease: "easeOut",
-    },
-  },
+  visible: { opacity: 1, y: 0, transition: { when: "beforeChildren", staggerChildren: 0.2, duration: 0.8, ease: "easeOut" } },
 };
-
-const childVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
-};
-
-// ✨ Tab Switching Animations
+const childVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const tabContentVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.98 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
   exit: { opacity: 0, y: -30, scale: 0.98, transition: { duration: 0.4 } },
 };
 
+function getImgSrc(url) {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${API_BASE}${url}`;
+}
+
 export default function Gallery() {
+  const [grouped, setGrouped] = useState({ personal: [], projects: [], achievements: [] });
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("personal");
   const [zoom, setZoom] = useState({ img: null, post: null, index: 0 });
 
-  const openZoom = (post, index) =>
-    setZoom({ img: post.photos[index], post, index });
+  useEffect(() => {
+    fetch(`${API_BASE}/api/gallery`)
+      .then(r => r.json())
+      .then(data => { setGrouped(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
+  const openZoom = (post, index) => setZoom({ img: post.photos[index], post, index });
   const closeZoom = () => setZoom({ img: null, post: null, index: 0 });
-
   const nextImage = () => {
     if (!zoom.post) return;
     const nextIndex = (zoom.index + 1) % zoom.post.photos.length;
     setZoom({ ...zoom, img: zoom.post.photos[nextIndex], index: nextIndex });
   };
-
   const prevImage = () => {
     if (!zoom.post) return;
-    const prevIndex =
-      (zoom.index - 1 + zoom.post.photos.length) % zoom.post.photos.length;
+    const prevIndex = (zoom.index - 1 + zoom.post.photos.length) % zoom.post.photos.length;
     setZoom({ ...zoom, img: zoom.post.photos[prevIndex], index: prevIndex });
   };
 
-  return (
-    <motion.section
-      className="gallery-container"
-      variants={pageVariants}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-    >
-      {/* 🌟 Title */}
-      <motion.h2 className="gallery-title" variants={childVariants}>
-        Gallery
-      </motion.h2>
+  const currentPosts = grouped[tab] || [];
 
-      {/* 🧭 Tabs */}
+  return (
+    <motion.section className="gallery-container" variants={pageVariants} initial="hidden" animate="visible" exit="hidden">
+      <motion.h2 className="gallery-title" variants={childVariants}>Gallery</motion.h2>
+
       <motion.div className="tab-buttons" variants={childVariants}>
         {["personal", "projects", "achievements"].map((type) => (
-          <motion.button
-            key={type}
-            className={`tab ${tab === type ? "active" : ""}`}
-            onClick={() => setTab(type)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+          <motion.button key={type} className={`tab ${tab === type ? "active" : ""}`}
+            onClick={() => setTab(type)} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             {type.charAt(0).toUpperCase() + type.slice(1)}
           </motion.button>
         ))}
       </motion.div>
 
-      {/* 🖼️ Posts with Animation on Tab Switch */}
+      {loading && <p style={{ color: '#888', textAlign: 'center' }}>Loading gallery...</p>}
+
       <AnimatePresence mode="wait">
-        <motion.div
-          key={tab} // Important for AnimatePresence to detect tab change
-          className="post-feed"
-          variants={tabContentVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
-          {IMAGES[tab].map((post) => (
-            <motion.div
-              key={post.id}
-              className="post-card"
-              variants={childVariants}
-              whileHover={{ y: -4 }}
-            >
+        <motion.div key={tab} className="post-feed" variants={tabContentVariants} initial="hidden" animate="visible" exit="exit">
+          {currentPosts.length === 0 && !loading && (
+            <p style={{ color: '#888', textAlign: 'center', marginTop: 40 }}>No posts in this category yet.</p>
+          )}
+          {currentPosts.map((post) => (
+            <motion.div key={post._id} className="post-card" variants={childVariants} whileHover={{ y: -4 }}>
               <p className="caption">{post.caption}</p>
-              <div
-                className={`photo-grid ${
-                  post.photos.length > 1 ? "multi" : "single"
-                }`}
-              >
-                {post.photos.map((src, i) => (
-                  <motion.div
-                    key={i}
-                    className="photo-item"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 250 }}
-                    onClick={() => openZoom(post, i)}
-                  >
-                    <img src={src} alt="gallery" />
+              <div className={`photo-grid ${post.photos?.length > 1 ? "multi" : "single"}`}>
+                {post.photos?.map((src, i) => (
+                  <motion.div key={i} className="photo-item" whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 250 }} onClick={() => openZoom(post, i)}>
+                    <img src={getImgSrc(src)} alt="gallery" />
                   </motion.div>
                 ))}
               </div>
@@ -161,40 +85,19 @@ export default function Gallery() {
         </motion.div>
       </AnimatePresence>
 
-      {/* 🔍 Zoom Overlay */}
+      {/* Zoom Overlay */}
       <AnimatePresence>
         {zoom.img && (
-          <motion.div
-            className="zoom-overlay"
-            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            animate={{ opacity: 1, backdropFilter: "blur(6px)" }}
-            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            transition={{ duration: 0.4 }}
-          >
-            <motion.img
-              key={zoom.img}
-              src={zoom.img}
-              alt="zoom"
-              className="zoom-img"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            />
-
+          <motion.div className="zoom-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+            <motion.img key={zoom.img} src={getImgSrc(zoom.img)} alt="zoom" className="zoom-img"
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ duration: 0.3 }} />
             {zoom.post?.photos.length > 1 && (
               <>
-                <button className="nav-btn left" onClick={prevImage}>
-                  <ChevronLeft size={32} />
-                </button>
-                <button className="nav-btn right" onClick={nextImage}>
-                  <ChevronRight size={32} />
-                </button>
+                <button className="nav-btn left" onClick={prevImage}><ChevronLeft size={32} /></button>
+                <button className="nav-btn right" onClick={nextImage}><ChevronRight size={32} /></button>
               </>
             )}
-            <button className="close-btn" onClick={closeZoom}>
-              <X size={28} />
-            </button>
+            <button className="close-btn" onClick={closeZoom}><X size={28} /></button>
           </motion.div>
         )}
       </AnimatePresence>

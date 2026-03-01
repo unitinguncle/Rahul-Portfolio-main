@@ -2,7 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 
 // 🖼️ Import Assets
-import photo from '../../public/Satyam LINKEDIN.png'
+import photo from '../../public/Rahul_LINKEDIN.png'
 import githubLogo from '../../public/github.png'
 import linkedinLogo from '../../public/linkedin.png'
 import gmailLogo from '../../public/gmail.png'
@@ -12,19 +12,16 @@ import facebookLogo from '../../public/facebook.png'
 
 export default function Home() {
   const professions = [
-    'Full Stack Developer',
-    'AI Enthusiast',
-    'Creative Coder',
-    'Computer Vision Researcher',
+    'Data Engineer',
+    'Cloud Specialist',
+    'ETL Developer',
+    'Python Developer',
   ]
 
   const quickLinks = [
-    { img: githubLogo, title: 'GitHub', link: 'https://github.com/SatyanshuSatyam' },
-    { img: linkedinLogo, title: 'LinkedIn', link: 'https://www.linkedin.com/in/satyanshu-satyam-442b61280/' },
-    { img: gmailLogo, title: 'Email', link: 'satyanshu2801@gmail.com' },
-    { img: whatsappLogo, title: 'WhatsApp', link: 'https://wa.me/+917980720891' },
-    { img: instagramLogo, title: 'Instagram', link: 'https://www.instagram.com/satyanshu_satyam/' },
-    { img: facebookLogo, title: 'Facebook', link: 'https://www.facebook.com/satyam.sah.9277' },
+    { img: linkedinLogo, title: 'LinkedIn', link: 'https://www.linkedin.com/in/rahul25kumar' },
+    { img: gmailLogo, title: 'Email', link: 'mailto:rahulkumar.er4585@gmail.com' },
+    { img: instagramLogo, title: 'Instagram', link: 'https://instagram.com/r3.rahul' },
   ]
 
   return (
@@ -115,7 +112,7 @@ export default function Home() {
           >
             <motion.img
               src={photo}
-              alt="Kunj Desai"
+              alt="Rahul Kumar"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 1 }}
@@ -162,7 +159,7 @@ export default function Home() {
                 backgroundSize: '200%',
               }}
             >
-              Satyanshu Satyam
+              Rahul Kumar
             </motion.span>
           </h1>
 
@@ -176,7 +173,7 @@ export default function Home() {
               maxWidth: '95%',
             }}
           >
-          Engineer | Full Stack Developer | Tech Explorer
+            Data Engineer | Cloud Specialist | Python Developer
           </p>
 
           {/* --- Profession Tags --- */}
@@ -226,10 +223,10 @@ export default function Home() {
               marginTop: '1.2rem',
             }}
           >
-            {[ 
-              { label: '📍 Location', value: 'Bhagalpur, Bihar, India' },
-              { label: '💼 Expertise', value: 'MERN Stack, Problem solving' },
-              { label: '📧 Contact', value: 'satyanshu2801@gmail.com' },
+            {[
+              { label: '📍 Location', value: 'New Delhi, India' },
+              { label: '💼 Expertise', value: 'Azure, ADF, Big Data' },
+              { label: '📧 Contact', value: 'rahulkumar.er4585@gmail.com' },
             ].map((info, i) => (
               <motion.div
                 key={i}

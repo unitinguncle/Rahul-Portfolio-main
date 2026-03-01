@@ -3,139 +3,93 @@ import { motion } from "framer-motion";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import "./blog.css";
 
+const API_BASE = "";
+
 export default function Blog() {
-  const defaultPosts = [
-    {
-      id: 1,
-      title: "Why I Love Building AI Projects",
-      text: "Working on AI-based systems like mammogram cancer detection has taught me how impactful technology can be when applied to healthcare. Combining deep learning with real-world problems is my favorite way to innovate.",
-    },
-    {
-      id: 2,
-      title: "A Broke Man Has No Voice",
-      text: "It is a brutal truth: society measures a man's worth by his ability to provide. Without financial stability, your opinions often go unheard and your influence remains invisible. Financial independence is dignity.",
-    },
-    {
-      id: 3,
-      title: "Nobody Is Coming To Save You",
-      text: "We grow up expecting fairness, but the world is indifferent to your struggle. Success is never guaranteed, and sometimes you can do everything right and still lose. You must build your own armor; resilience is your only weapon.",
-    },
-    {
-      id: 4,
-      title: "There Are No Shortcuts",
-      text: "Everyone wants the prize, but few want the pain. Hard work isn't just about late nights; it is about showing up when you have zero motivation. Your future is built on the boring, repetitive work you do in the dark.",
-    },
-    {
-      id: 5,
-      title: "Money Is A Tool For Freedom",
-      text: "They say money can't buy happiness, but it buys options. It provides security and the ability to protect the people you love. Ignoring its importance is naive; mastering it is essential for surviving the modern world.",
-    },
-  ];
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedVotes = JSON.parse(localStorage.getItem("kd_blog_votes") || "{}");
-    const votedByUser = JSON.parse(localStorage.getItem("kd_blog_voted") || "{}");
-    const withVotes = defaultPosts.map((p) => ({
-      ...p,
-      agree: savedVotes[p.id]?.agree || 0,
-      disagree: savedVotes[p.id]?.disagree || 0,
-      userVote: votedByUser[p.id] || null,
-    }));
-    setPosts(withVotes);
+    fetch(`${API_BASE}/api/blog`)
+      .then(r => r.json())
+      .then(data => { setPosts(data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
-  function vote(id, type) {
-    const votedByUser = JSON.parse(localStorage.getItem("kd_blog_voted") || "{}");
-    if (votedByUser[id]) return;
+  async function vote(id, type) {
+    const post = posts.find(p => p._id === id);
+    if (!post || post.userVote) return; // already voted locally
 
-    const next = posts.map((p) =>
-      p.id === id ? { ...p, [type]: p[type] + 1, userVote: type } : p
-    );
-    setPosts(next);
-
-    const votes = Object.fromEntries(
-      next.map((p) => [p.id, { agree: p.agree, disagree: p.disagree }])
-    );
-    localStorage.setItem("kd_blog_votes", JSON.stringify(votes));
-    localStorage.setItem(
-      "kd_blog_voted",
-      JSON.stringify({ ...votedByUser, [id]: type })
-    );
+    try {
+      const res = await fetch(`${API_BASE}/api/blog/${id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+      if (res.status === 400) return; // already voted server-side
+      const data = await res.json();
+      setPosts(prev => prev.map(p => p._id === id
+        ? { ...p, agree: data.agree, disagree: data.disagree, userVote: type }
+        : p
+      ));
+    } catch (err) {
+      console.error('Vote error:', err);
+    }
   }
 
+  const getImgSrc = (url) => !url ? '' : (url.startsWith('http') ? url : `${API_BASE}${url}`);
+
   return (
-    <motion.section
-      className="blog-section"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      <motion.h2
-        className="blog-title"
-        initial={{ y: -15, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
+    <motion.section className="blog-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}>
+      <motion.h2 className="blog-title" initial={{ y: -15, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }}>
         📝 My Blog
       </motion.h2>
-      <p className="blog-sub">
-        Personal thoughts, experiences, and reflections — feel free to react!
-      </p>
+      <p className="blog-sub">Personal thoughts, experiences, and reflections — feel free to react!</p>
+
+      {loading && <p style={{ color: '#888', textAlign: 'center' }}>Loading posts...</p>}
 
       <div className="blog-grid">
         {posts.map((p, idx) => (
-          <motion.div
-            key={p.id}
-            className="blog-post"
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: idx * 0.15 }}
-            whileHover={{
-              scale: 1.02,
-              boxShadow: "0 0 20px rgba(255,255,255,0.1)",
-            }}
-          >
+          <motion.div key={p._id} className="blog-post"
+            initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: idx * 0.12 }}
+            whileHover={{ scale: 1.02, boxShadow: "0 0 20px rgba(255,255,255,0.1)" }}>
+
+            {/* Cover image */}
+            {p.coverImageUrl && (
+              <img src={getImgSrc(p.coverImageUrl)} alt={p.title}
+                style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 14 }} />
+            )}
+
             <h3 className="post-title">{p.title}</h3>
-            <p className="post-text">{p.text}</p>
+
+            {/* Render rich HTML content */}
+            <div className="post-text" dangerouslySetInnerHTML={{ __html: p.content }} />
+
+            {/* Tags */}
+            {p.tags?.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '10px 0' }}>
+                {p.tags.map(t => (
+                  <span key={t} style={{ background: 'rgba(0,180,255,0.1)', border: '1px solid rgba(0,180,255,0.2)', padding: '2px 8px', borderRadius: 5, fontSize: 11, color: '#80cfff' }}>{t}</span>
+                ))}
+              </div>
+            )}
 
             <div className="vote-container">
-              <motion.button
-                onClick={() => vote(p.id, "agree")}
-                disabled={!!p.userVote}
-                whileTap={{ scale: 0.85 }}
-                whileHover={{ scale: 1.15 }}
-                className={`vote-btn-circle agree ${
-                  p.userVote === "agree" ? "active" : ""
-                }`}
-              >
+              <motion.button onClick={() => vote(p._id, "agree")} disabled={!!p.userVote}
+                whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.15 }}
+                className={`vote-btn-circle agree ${p.userVote === "agree" ? "active" : ""}`}>
                 <ThumbsUp size={20} />
-                <motion.span
-                  key={p.agree}
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="vote-count"
-                >
+                <motion.span key={p.agree} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="vote-count">
                   {p.agree}
                 </motion.span>
               </motion.button>
 
-              <motion.button
-                onClick={() => vote(p.id, "disagree")}
-                disabled={!!p.userVote}
-                whileTap={{ scale: 0.85 }}
-                whileHover={{ scale: 1.15 }}
-                className={`vote-btn-circle disagree ${
-                  p.userVote === "disagree" ? "active" : ""
-                }`}
-              >
+              <motion.button onClick={() => vote(p._id, "disagree")} disabled={!!p.userVote}
+                whileTap={{ scale: 0.85 }} whileHover={{ scale: 1.15 }}
+                className={`vote-btn-circle disagree ${p.userVote === "disagree" ? "active" : ""}`}>
                 <ThumbsDown size={20} />
-                <motion.span
-                  key={p.disagree}
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="vote-count"
-                >
+                <motion.span key={p.disagree} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="vote-count">
                   {p.disagree}
                 </motion.span>
               </motion.button>
