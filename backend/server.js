@@ -8,18 +8,19 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ── Middleware ─────────────────────────────────────────────
-app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:5175',
-        'http://localhost:3000',
-        'http://localhost:4173',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:5174',
-    ],
-    credentials: true,
-}));
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:3000',
+    'http://localhost:4173',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+];
+// Add production domain dynamically from .env (e.g. https://portfolio.rahulkumar.xyz)
+if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
+
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -42,10 +43,22 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── 404 Fallback ───────────────────────────────────────────
-app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-});
+// ── Production: serve React build ──────────────────────────
+// In dev, Vite handles the frontend separately on its own port.
+// In production, Express serves the built /dist folder directly.
+if (process.env.NODE_ENV === 'production') {
+    const distPath = path.join(__dirname, '../dist');
+    app.use(express.static(distPath));
+    // React Router catch-all — send index.html for any non-API route
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(distPath, 'index.html'));
+    });
+} else {
+    // Dev 404 fallback
+    app.use((req, res) => {
+        res.status(404).json({ error: 'Route not found' });
+    });
+}
 
 // ── Error handler ──────────────────────────────────────────
 app.use((err, req, res, next) => {
